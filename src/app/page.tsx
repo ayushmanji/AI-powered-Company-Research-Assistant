@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
-import { ResolveCompanyResponse, CrawledPage } from "@/types";
+import { ResolveCompanyResponse, CrawledPage, StructuredCompanyData } from "@/types";
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -14,6 +14,11 @@ export default function Home() {
   const [crawling, setCrawling] = useState(false);
   const [crawlError, setCrawlError] = useState<string | null>(null);
   const [crawledPages, setCrawledPages] = useState<CrawledPage[] | null>(null);
+
+  // Structured Data state
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [structuredData, setStructuredData] = useState<StructuredCompanyData | null>(null);
 
   const handleResolve = async (e: FormEvent) => {
     e.preventDefault();
@@ -28,6 +33,8 @@ export default function Home() {
     setResult(null);
     setCrawledPages(null);
     setCrawlError(null);
+    setStructuredData(null);
+    setExtractError(null);
 
     try {
       const response = await fetch("/api/company/resolve", {
@@ -59,6 +66,8 @@ export default function Home() {
     setCrawling(true);
     setCrawlError(null);
     setCrawledPages(null);
+    setStructuredData(null);
+    setExtractError(null);
 
     try {
       const response = await fetch("/api/company/crawl", {
@@ -75,12 +84,48 @@ export default function Home() {
         throw new Error(data.error || "Failed to crawl website.");
       }
 
-      setCrawledPages(data.pages as CrawledPage[]);
+      const pages = data.pages as CrawledPage[];
+      setCrawledPages(pages);
+
+      // Automatically trigger structured data extraction
+      await handleExtractData(pages);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "An unexpected error occurred while crawling.";
       setCrawlError(msg);
     } finally {
       setCrawling(false);
+    }
+  };
+
+  const handleExtractData = async (pages: CrawledPage[]) => {
+    setExtracting(true);
+    setExtractError(null);
+
+    try {
+      const response = await fetch("/api/company/extract", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          companyName: result?.companyName || "",
+          website: result?.website || "",
+          pages,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to extract structured data.");
+      }
+
+      setStructuredData(data.structuredData as StructuredCompanyData);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred during extraction.";
+      setExtractError(msg);
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -100,12 +145,12 @@ export default function Home() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter company name or URL..."
-            disabled={loading || crawling}
+            disabled={loading || crawling || extracting}
             className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
           <button
             type="submit"
-            disabled={loading || crawling || !query.trim()}
+            disabled={loading || crawling || extracting || !query.trim()}
             className="rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus:outline-none disabled:bg-blue-300 disabled:cursor-not-allowed"
           >
             {loading ? "Resolving..." : "Search"}
@@ -144,57 +189,151 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleCrawl}
-                disabled={crawling}
+                disabled={crawling || extracting}
                 className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 focus:outline-none disabled:bg-emerald-300 disabled:cursor-not-allowed transition-colors"
               >
-                {crawling ? "Crawling Website..." : "Crawl Website"}
+                {crawling ? "Crawling & Extracting..." : "Crawl & Extract Data"}
               </button>
             </div>
           </div>
         )}
 
-        {crawling && (
+        {(crawling || extracting) && (
           <div className="mt-4 rounded-md bg-blue-50 p-4 border border-blue-200 text-sm text-blue-700 max-w-xl mx-auto text-center">
-            <p className="font-medium">Crawling in progress...</p>
-            <p className="text-xs text-blue-600 mt-1">Discovering priority internal pages & extracting text content.</p>
+            <p className="font-medium">
+              {crawling ? "Crawling website pages..." : "Processing & structuring company data..."}
+            </p>
           </div>
         )}
 
-        {crawlError && (
+        {(crawlError || extractError) && (
           <div className="mt-4 rounded-md bg-red-50 p-4 border border-red-200 text-sm text-red-700 max-w-xl mx-auto text-left">
-            <p className="font-medium">Crawling Error</p>
-            <p className="mt-1 text-red-600">{crawlError}</p>
+            <p className="font-medium">Processing Error</p>
+            <p className="mt-1 text-red-600">{crawlError || extractError}</p>
           </div>
         )}
 
-        {crawledPages && (
-          <div className="mt-6 rounded-md bg-white p-6 border border-gray-200 text-left max-w-xl mx-auto space-y-4 shadow-sm">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-sm font-bold text-gray-900">
-                Crawled Pages ({crawledPages.length})
+        {structuredData && (
+          <div className="mt-6 rounded-md bg-white p-6 border border-gray-200 text-left max-w-xl mx-auto space-y-5 shadow-sm">
+            <div className="border-b border-gray-100 pb-3 flex justify-between items-center">
+              <h3 className="text-base font-bold text-gray-900">
+                Structured Company Profile
               </h3>
               <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
-                Discovery Complete
+                Normalized Data
               </span>
             </div>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
-              {crawledPages.map((page, index) => (
-                <div key={index} className="rounded-md border border-gray-100 p-3 bg-gray-50 space-y-1">
-                  <p className="text-xs font-semibold text-gray-900 truncate">
-                    {page.title || "Untitled Page"}
-                  </p>
-                  <a
-                    href={page.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] text-blue-600 hover:underline block truncate"
-                  >
-                    {page.url}
-                  </a>
-                  <p className="text-xs text-gray-600 line-clamp-3 pt-1">
-                    {page.content}
-                  </p>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <p className="font-semibold text-gray-500">Phone</p>
+                <p className="text-gray-900 font-medium">{structuredData.phone}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-500">Emails ({structuredData.emails.length})</p>
+                {structuredData.emails.length > 0 ? (
+                  <ul className="text-gray-900 space-y-0.5">
+                    {structuredData.emails.map((email, idx) => (
+                      <li key={idx} className="truncate">{email}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-400">None found</p>
+                )}
+              </div>
+            </div>
+
+            {structuredData.addresses.length > 0 && (
+              <div className="text-xs">
+                <p className="font-semibold text-gray-500">Addresses</p>
+                <ul className="text-gray-900 space-y-1 mt-0.5">
+                  {structuredData.addresses.map((addr, idx) => (
+                    <li key={idx} className="bg-gray-50 p-1.5 rounded border border-gray-100">{addr}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {structuredData.products.length > 0 && (
+              <div className="text-xs">
+                <p className="font-semibold text-gray-500">Key Products</p>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {structuredData.products.map((item, idx) => (
+                    <span key={idx} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {structuredData.services.length > 0 && (
+              <div className="text-xs">
+                <p className="font-semibold text-gray-500">Services & Solutions</p>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {structuredData.services.map((item, idx) => (
+                    <span key={idx} className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-100">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {structuredData.socialLinks.length > 0 && (
+              <div className="text-xs">
+                <p className="font-semibold text-gray-500">Social Profiles</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {structuredData.socialLinks.map((link, idx) => (
+                    <a
+                      key={idx}
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline bg-gray-50 px-2 py-0.5 rounded border border-gray-200"
+                    >
+                      {new URL(link).hostname.replace("www.", "")}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {structuredData.importantPages.length > 0 && (
+              <div className="text-xs pt-2 border-t border-gray-100">
+                <p className="font-semibold text-gray-500 mb-1">
+                  Important Pages Discovered ({structuredData.importantPages.length})
+                </p>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {structuredData.importantPages.map((url, idx) => (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline block truncate text-[11px]"
+                    >
+                      {url}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {crawledPages && !structuredData && (
+          <div className="mt-6 rounded-md bg-white p-6 border border-gray-200 text-left max-w-xl mx-auto space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-bold text-gray-900">
+                Raw Crawled Pages ({crawledPages.length})
+              </h3>
+            </div>
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {crawledPages.map((page, idx) => (
+                <div key={idx} className="p-2 bg-gray-50 rounded border border-gray-100 text-xs">
+                  <p className="font-semibold text-gray-900">{page.title}</p>
+                  <p className="text-[11px] text-gray-500 truncate">{page.url}</p>
                 </div>
               ))}
             </div>
