@@ -1,8 +1,10 @@
-# AI-Powered Company Research Assistant 🚀
+# AI-Powered Company Research Assistant
 
 An autonomous corporate intelligence assistant built with Next.js 15, TypeScript, Tailwind CSS, Serper.dev, OpenRouter AI, PDFKit, and Discord API.
 
 The application converts any company name or domain URL into a comprehensive, verified executive research report and downloadable PDF.
+
+🔗 **Live Application**: [https://company-research-assistant-tau.vercel.app](https://company-research-assistant-tau.vercel.app)
 
 ---
 
@@ -25,7 +27,7 @@ The application converts any company name or domain URL into a comprehensive, ve
 - **Language**: TypeScript (Strict Mode)
 - **Styling**: Tailwind CSS, PostCSS
 - **Search & Resolution API**: Serper.dev API
-- **AI Synthesis API**: OpenRouter API (`google/gemini-2.0-flash-001`)
+- **AI Synthesis API**: OpenRouter API (`google/gemini-2.0-flash-001` / `moonshotai/kimi-k2`)
 - **PDF Generation**: PDFKit
 - **Icons & UI Utilities**: clsx, tailwind-merge
 
@@ -62,29 +64,27 @@ src/
 ├── app/
 │   ├── api/
 │   │   ├── company/
-│   │   │   ├── analyze/        # AI Analysis API
-│   │   │   ├── competitors/    # Competitor Verification API
-│   │   │   ├── crawl/          # Website Crawler API
 │   │   │   ├── export-pdf/     # PDF Export API
-│   │   │   ├── extract/        # Data Extraction API
 │   │   │   ├── research/       # Unified Pipeline API
-│   │   │   ├── resolve/        # Company Resolution API
 │   │   │   └── send-discord/   # Discord Submission API
 │   │   └── health/             # Health Check API
 │   ├── globals.css             # Tailwind Stylesheet
 │   ├── layout.tsx              # Root Layout
-│   └── page.tsx                # Main Landing Page & UI
+│   └── page.tsx                # Main Landing Page & UI Orchestrator
 ├── components/
-│   └── Header.tsx              # Application Header
+│   ├── DiscordIntegration.tsx  # Discord Form & Bot Webhook Component
+│   ├── Header.tsx              # Application Header
+│   ├── ProgressTimeline.tsx    # Live Research Timeline Component
+│   └── ReportDashboard.tsx     # Comprehensive Research Dashboard Component
 ├── lib/
 │   ├── constants.ts            # Shared App Constants
 │   └── utils.ts                # Class merging helpers
 ├── services/
 │   ├── competitors.ts          # Serper Competitor Verifier
 │   ├── crawler.ts              # Domain Web Crawler
-│   ├── dataExtractor.ts        # Data Normalization Service
 │   ├── discord.ts              # Discord Bot Webhook Handler
-│   ├── extractor.ts            # HTML Text & Link Cleaner
+│   ├── entityExtractor.ts      # Entity Extraction & Normalization
+│   ├── htmlParser.ts           # HTML Text & Link Cleaner
 │   ├── llm.ts                  # OpenRouter LLM Service
 │   ├── pdfGenerator.ts         # PDFKit Document Generator
 │   ├── researchPipeline.ts     # Unified Pipeline Orchestrator
@@ -97,26 +97,17 @@ src/
 
 ## ⚙️ Environment Variables Setup
 
-Copy `.env.example` to `.env`:
-
-```bash
-cp .env.example .env
-```
-
-Define the required API keys in `.env`:
+Define the required API keys in `.env.local`:
 
 ```env
 NEXT_PUBLIC_APP_NAME="Company Research Assistant"
 NEXT_PUBLIC_API_URL="http://localhost:3000"
 
-# Required for Serper Search & Competitor Verification
 SERPER_API_KEY="your_serper_api_key_here"
 
-# Required for AI Synthesis
 OPENROUTER_API_KEY="your_openrouter_api_key_here"
-OPENROUTER_MODEL="google/gemini-2.0-flash-001"
+OPENROUTER_MODEL="moonshotai/kimi-k2"
 
-# Optional default Discord Bot Token
 DISCORD_BOT_TOKEN="your_discord_bot_token_here"
 ```
 
@@ -144,8 +135,6 @@ DISCORD_BOT_TOKEN="your_discord_bot_token_here"
 
 ## 📦 Production Build & Deployment
 
-To verify and test production build locally:
-
 ```bash
 # Run ESLint validation
 npm run lint
@@ -161,4 +150,4 @@ npm run start
 
 ## 📄 License
 
-MIT License. Built for hackathon submission.
+MIT License.
