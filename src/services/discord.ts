@@ -26,15 +26,14 @@ export async function sendReportToDiscord(params: SendDiscordParams): Promise<bo
     throw new Error("Valid research report is required");
   }
 
-  // Generate PDF buffer using existing PDF generator service
   const pdfBuffer = await generatePdfReport(report);
 
   const messageText = [
-    "📋 **Company Research Report Submission**",
-    `👤 **Applicant Name:** ${applicantName || "N/A"}`,
-    `✉️ **Applicant Email:** ${applicantEmail || "N/A"}`,
-    `🏢 **Company Name:** ${report.company.companyName || "N/A"}`,
-    `🌐 **Company Website:** ${report.company.website || "N/A"}`,
+    "**Company Research Report Submission**",
+    `**Applicant Name:** ${applicantName || "N/A"}`,
+    `**Applicant Email:** ${applicantEmail || "N/A"}`,
+    `**Company Name:** ${report.company.companyName || "N/A"}`,
+    `**Company Website:** ${report.company.website || "N/A"}`,
   ].join("\n");
 
   const companyNameClean = (report.company.companyName || "company")
@@ -42,7 +41,6 @@ export async function sendReportToDiscord(params: SendDiscordParams): Promise<bo
     .replace(/[^a-z0-9]/g, "-");
   const fileName = `${companyNameClean}-research-report.pdf`;
 
-  // Construct multipart/form-data for Discord API
   const formData = new FormData();
   formData.append(
     "payload_json",

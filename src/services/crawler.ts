@@ -37,12 +37,10 @@ function shouldIgnoreUrl(urlStr: string): boolean {
     const parsed = new URL(urlStr);
     const pathname = parsed.pathname.toLowerCase();
 
-    // Check static asset extensions
     if (IGNORE_EXTENSIONS.some((ext) => pathname.endsWith(ext))) {
       return true;
     }
 
-    // Check ignore keywords in path segments
     const pathParts = pathname.split("/").filter(Boolean);
     for (const part of pathParts) {
       if (IGNORE_KEYWORDS.some((kw) => part.includes(kw))) {
@@ -117,7 +115,6 @@ export async function crawlWebsite(startUrl: string, maxPages: number = 10, maxD
   const visited = new Set<string>();
   const results: CrawledPage[] = [];
 
-  // Queue holds item: { url: string, depth: number }
   interface QueueItem {
     url: string;
     depth: number;
@@ -126,7 +123,6 @@ export async function crawlWebsite(startUrl: string, maxPages: number = 10, maxD
   let queue: QueueItem[] = [{ url: rootUrl, depth: 0 }];
 
   while (queue.length > 0 && results.length < maxPages) {
-    // Sort queue so priority URLs are processed first at the current level
     queue.sort((a, b) => {
       if (a.depth !== b.depth) return a.depth - b.depth;
       const aPriority = isPriorityUrl(a.url) ? 0 : 1;
@@ -160,7 +156,6 @@ export async function crawlWebsite(startUrl: string, maxPages: number = 10, maxD
       });
     }
 
-    // Discover next level links if depth < maxDepth
     if (current.depth < maxDepth && results.length < maxPages) {
       const discoveredLinks = extractInternalLinks(html, current.url, rootHostname);
       for (const link of discoveredLinks) {
