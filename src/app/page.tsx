@@ -29,6 +29,16 @@ export default function Home() {
   const [report, setReport] = useState<UnifiedResearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Discord Form state
+  const [discordOpen, setDiscordOpen] = useState(false);
+  const [applicantName, setApplicantName] = useState("");
+  const [applicantEmail, setApplicantEmail] = useState("");
+  const [botToken, setBotToken] = useState("");
+  const [channelId, setChannelId] = useState("");
+  const [sendingDiscord, setSendingDiscord] = useState(false);
+  const [discordSuccess, setDiscordSuccess] = useState<string | null>(null);
+  const [discordError, setDiscordError] = useState<string | null>(null);
+
   const handleSearch = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = query.trim();
@@ -41,8 +51,9 @@ export default function Home() {
     setError(null);
     setReport(null);
     setActiveStepIndex(0);
+    setDiscordSuccess(null);
+    setDiscordError(null);
 
-    // Step simulation interval to provide a ChatGPT-style progressive timeline
     const interval = setInterval(() => {
       setActiveStepIndex((prev) => {
         if (prev < 6) return prev + 1;
@@ -64,7 +75,7 @@ export default function Home() {
         throw new Error(data.error || "Failed to execute research pipeline.");
       }
 
-      setActiveStepIndex(7); // Complete step
+      setActiveStepIndex(7);
       setReport(data as UnifiedResearchResponse);
     } catch (err: unknown) {
       clearInterval(interval);
@@ -108,6 +119,45 @@ export default function Home() {
     }
   };
 
+  const handleSendDiscord = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!report) return;
+    if (!channelId.trim()) {
+      setDiscordError("Please enter a Discord Channel ID.");
+      return;
+    }
+
+    setSendingDiscord(true);
+    setDiscordSuccess(null);
+    setDiscordError(null);
+
+    try {
+      const response = await fetch("/api/company/send-discord", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          botToken: botToken.trim() || undefined,
+          channelId: channelId.trim(),
+          applicantName: applicantName.trim(),
+          applicantEmail: applicantEmail.trim(),
+          report,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send report to Discord.");
+      }
+
+      setDiscordSuccess("Research report & PDF successfully sent to Discord!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to send to Discord.";
+      setDiscordError(msg);
+    } finally {
+      setSendingDiscord(false);
+    }
+  };
+
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center space-y-6">
@@ -144,7 +194,6 @@ export default function Home() {
               {PIPELINE_STEPS.map((step, idx) => {
                 const isDone = idx < activeStepIndex;
                 const isCurrent = idx === activeStepIndex;
-                const isUpcoming = idx > activeStepIndex;
 
                 return (
                   <div
@@ -355,6 +404,87 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+            {/* Collapsible Discord Integration Section */}
+            <div className="pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setDiscordOpen(!discordOpen)}
+                className="w-full flex items-center justify-between text-xs font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 p-3 rounded border border-gray-200 transition-colors"
+              >
+                <span>Discord Integration</span>
+                <span>{discordOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {discordOpen && (
+                <form onSubmit={handleSendDiscord} className="mt-3 p-4 bg-gray-50 rounded border border-gray-200 space-y-3 text-xs">
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Applicant Name</label>
+                    <input
+                      type="text"
+                      value={applicantName}
+                      onChange={(e) => setApplicantName(e.target.value)}
+                      placeholder="e.g. John Doe"
+                      className="w-full rounded border border-gray-300 px-3 py-1.5 text-gray-900 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Applicant Email</label>
+                    <input
+                      type="email"
+                      value={applicantEmail}
+                      onChange={(e) => setApplicantEmail(e.target.value)}
+                      placeholder="e.g. john@example.com"
+                      className="w-full rounded border border-gray-300 px-3 py-1.5 text-gray-900 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Discord Bot Token (Optional if set in .env)</label>
+                    <input
+                      type="password"
+                      value={botToken}
+                      onChange={(e) => setBotToken(e.target.value)}
+                      placeholder="Enter bot token..."
+                      className="w-full rounded border border-gray-300 px-3 py-1.5 text-gray-900 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">Discord Channel ID *</label>
+                    <input
+                      type="text"
+                      value={channelId}
+                      onChange={(e) => setChannelId(e.target.value)}
+                      placeholder="e.g. 123456789012345678"
+                      required
+                      className="w-full rounded border border-gray-300 px-3 py-1.5 text-gray-900 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {discordSuccess && (
+                    <div className="p-2 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded font-medium">
+                      {discordSuccess}
+                    </div>
+                  )}
+
+                  {discordError && (
+                    <div className="p-2 bg-red-50 border border-red-200 text-red-700 rounded font-medium">
+                      {discordError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={sendingDiscord || !channelId.trim()}
+                    className="w-full rounded bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {sendingDiscord ? "Sending to Discord..." : "Send to Discord"}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         )}
       </div>

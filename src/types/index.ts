@@ -97,3 +97,15 @@ export interface UnifiedResearchResponse {
 export interface ResearchPipelineRequest {
   query: string;
 }
+
+export interface DiscordSendRequest {
+  botToken?: string;
+  channelId: string;
+  applicantName: string;
+  applicantEmail: string;
+  report: UnifiedResearchResponse;
+}
+
+export interface DiscordSendResponse {
+  success: boolean;
+}
