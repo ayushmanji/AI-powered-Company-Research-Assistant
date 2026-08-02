@@ -11,10 +11,8 @@ export async function runResearchPipeline(query: string): Promise<UnifiedResearc
     throw new Error("Query cannot be empty");
   }
 
-  // 1. Resolve company & website
   const company = await resolveCompanyWebsite(trimmed);
 
-  // 2. Crawl website (with fallback if crawling fails)
   let pages: CrawledPage[] = [];
   try {
     pages = await crawlWebsite(company.website, 10, 2);
@@ -23,17 +21,14 @@ export async function runResearchPipeline(query: string): Promise<UnifiedResearc
     pages = [];
   }
 
-  // 3. Extract structured data
   const structuredData = extractStructuredCompanyData(
     company.companyName,
     company.website,
     pages
   );
 
-  // 4. Analyze with OpenRouter (gracefully handles missing key or LLM error)
   const analysis = await analyzeCompanyData(structuredData);
 
-  // 5. Verify competitors (if suggestions exist)
   let competitors: VerifiedCompetitor[] = [];
   if (analysis.competitorSuggestions && analysis.competitorSuggestions.length > 0) {
     try {

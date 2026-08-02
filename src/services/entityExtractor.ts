@@ -52,7 +52,6 @@ export function extractStructuredCompanyData(
   pages.forEach((page) => {
     importantPagesSet.add(page.url);
 
-    // Social Links
     socialDomains.forEach((domain) => {
       if (page.url.includes(domain)) {
         socialSet.add(page.url);
@@ -61,7 +60,6 @@ export function extractStructuredCompanyData(
 
     const content = page.content || "";
 
-    // Emails
     const foundEmails = content.match(emailRegex);
     if (foundEmails) {
       foundEmails.forEach((email) => {
@@ -72,19 +70,16 @@ export function extractStructuredCompanyData(
       });
     }
 
-    // Phones
     const foundPhones = content.match(phoneRegex);
     if (foundPhones) {
       foundPhones.forEach((phone) => phoneSet.add(phone.trim()));
     }
 
-    // Keyword heuristic extraction
     const lines = content.split("\n").map((l) => l.trim()).filter((l) => l.length > 2 && !isNoise(l));
 
     lines.forEach((line) => {
       const lower = line.toLowerCase();
 
-      // Product signals
       if (
         (lower.includes("product") || lower.includes("platform") || lower.includes("software") || lower.includes("app") || lower.includes("solution")) &&
         line.length < 50 &&
@@ -95,7 +90,6 @@ export function extractStructuredCompanyData(
         }
       }
 
-      // Service signals
       if (
         (lower.includes("service") || lower.includes("consulting") || lower.includes("support") || lower.includes("solution") || lower.includes("managed")) &&
         line.length < 50 &&
@@ -106,7 +100,6 @@ export function extractStructuredCompanyData(
         }
       }
 
-      // Address signals
       if (
         (lower.includes("street") || lower.includes("suite") || lower.includes("avenue") || lower.includes("boulevard") || lower.includes("road") || lower.includes("building")) &&
         line.length < 100

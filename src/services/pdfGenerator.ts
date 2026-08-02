@@ -15,10 +15,10 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", (err: Error) => reject(err));
 
-      const primaryColor = "#1E293B"; // Dark slate
-      const accentColor = "#2563EB";  // Royal blue
-      const textColor = "#334155";    // Slate text
-      const lightBg = "#F8FAFC";      // Soft background
+      const primaryColor = "#1E293B";
+      const accentColor = "#2563EB";
+      const textColor = "#334155";
+      const lightBg = "#F8FAFC";
 
       const { company, analysis, competitors, sources, metrics } = data;
       const dateStr = new Date().toLocaleDateString("en-US", {
@@ -27,7 +27,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         day: "numeric",
       });
 
-      // --- HEADER / COVER TITLE SECTION ---
       doc.rect(40, 40, 515, 120).fill(lightBg);
 
       doc
@@ -60,7 +59,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
 
       let yPos = 180;
 
-      // Helper function to check page overflow
       const checkNewPage = (neededHeight: number = 40) => {
         if (yPos + neededHeight > 730) {
           doc.addPage();
@@ -68,7 +66,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         }
       };
 
-      // Helper function for section headings
       const renderSectionHeader = (title: string) => {
         checkNewPage(40);
         doc
@@ -87,7 +84,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += 10;
       };
 
-      // --- KEY METRICS / QUICK FACTS ---
       if (analysis.keyMetrics && Object.values(analysis.keyMetrics).some(v => v)) {
         renderSectionHeader("1. Quick Facts & Key Metrics");
         
@@ -118,7 +114,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += 24;
       }
 
-      // --- EXECUTIVE SUMMARY ---
       if (analysis.summary) {
         renderSectionHeader("2. Executive Summary");
         doc
@@ -129,7 +124,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += doc.heightOfString(analysis.summary, { width: 515 }) + 20;
       }
 
-      // --- INDUSTRY & TARGET AUDIENCE ---
       if (analysis.industry || analysis.targetAudience) {
         renderSectionHeader("3. Market & Industry Positioning");
 
@@ -147,7 +141,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += 10;
       }
 
-      // --- PRODUCTS & SERVICES ---
       const hasProducts = analysis.products && analysis.products.length > 0;
       const hasServices = analysis.services && analysis.services.length > 0;
       if (hasProducts || hasServices) {
@@ -177,7 +170,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += 10;
       }
 
-      // --- CUSTOMER PAIN POINTS ---
       if (analysis.painPoints && analysis.painPoints.length > 0) {
         renderSectionHeader("5. Customer Pain Points Solved");
         analysis.painPoints.forEach((point) => {
@@ -188,7 +180,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += 10;
       }
 
-      // --- SWOT ANALYSIS ---
       renderSectionHeader("6. SWOT Analysis");
       const swotSections = [
         { label: "Strengths", items: analysis.strengths || [], color: "#065F46" },
@@ -212,7 +203,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
       });
       yPos += 10;
       
-      // --- BUSINESS RISKS ---
       if (analysis.businessRisks && analysis.businessRisks.length > 0) {
         renderSectionHeader("7. Business Risks");
         analysis.businessRisks.forEach((risk) => {
@@ -223,11 +213,9 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += 10;
       }
 
-      // --- VERIFIED COMPETITORS ---
       if (competitors && competitors.length > 0) {
         renderSectionHeader("8. Verified Market Competitors");
 
-        // Table Header
         checkNewPage(50);
         doc.rect(40, yPos, 515, 20).fill("#EDF2F7");
         doc.font("Helvetica-Bold").fontSize(8.5).fillColor(primaryColor);
@@ -237,7 +225,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         doc.text("Why Competitor", 390, yPos + 5, { width: 160 });
         yPos += 22;
 
-        // Table Rows
         competitors.forEach((comp, idx) => {
           checkNewPage(30);
           
@@ -260,7 +247,6 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         });
       }
 
-      // --- SOURCES SECTION ---
       if (sources && sources.length > 0) {
         renderSectionHeader("9. Sources Crawled");
         sources.forEach((src) => {
@@ -271,14 +257,12 @@ export function generatePdfReport(data: UnifiedResearchResponse): Promise<Buffer
         yPos += 10;
       }
       
-      // --- DISCLAIMER ---
       checkNewPage(40);
       doc.rect(40, yPos, 515, 35).fill("#FFFBEB");
       doc.font("Helvetica-Bold").fontSize(8).fillColor("#92400E").text("Disclaimer: ", 50, yPos + 10, { continued: true });
       doc.font("Helvetica").text("This report is AI-generated from publicly available information and should be reviewed before making business decisions.", { width: 495 });
       yPos += 45;
 
-      // --- FOOTER FOR ALL PAGES ---
       const totalPages = doc.bufferedPageRange().count;
       for (let i = 0; i < totalPages; i++) {
         doc.switchToPage(i);

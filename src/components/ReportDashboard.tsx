@@ -17,7 +17,6 @@ export function ReportDashboard({
 }: ReportDashboardProps) {
   return (
     <div className="rounded-md bg-white p-6 border border-gray-200 text-left max-w-3xl mx-auto space-y-6 shadow-sm">
-      {/* Header / Company Details & Actions */}
       <div className="border-b border-gray-100 pb-4 flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -49,13 +48,11 @@ export function ReportDashboard({
             disabled={downloadingPdf}
             className="w-full sm:w-auto rounded-md bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 focus:outline-none disabled:bg-blue-300 disabled:cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-1.5"
           >
-            <span>📥</span>
             <span>{downloadingPdf ? "Generating PDF..." : "Download PDF Report"}</span>
           </button>
         </div>
       </div>
 
-      {/* Research Statistics Grid */}
       {report.metrics && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 bg-gray-50 border border-gray-200 rounded text-center">
@@ -77,10 +74,8 @@ export function ReportDashboard({
         </div>
       )}
 
-      {/* AI Notice Banner (if unavailable) */}
       {isAiUnavailable ? (
         <div className="rounded-md bg-amber-50 p-4 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
-          <span className="text-base">ℹ️</span>
           <div>
             <p className="font-bold text-amber-950">AI Analysis Notice</p>
             <p className="mt-0.5 text-amber-800">
@@ -90,7 +85,6 @@ export function ReportDashboard({
         </div>
       ) : (
         <>
-          {/* Quick Facts & Key Metrics */}
           {report.analysis.keyMetrics && Object.values(report.analysis.keyMetrics).some(v => v) && (
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2">
@@ -125,7 +119,6 @@ export function ReportDashboard({
             </div>
           )}
 
-          {/* Executive Summary */}
           {report.analysis.summary && (
             <div className="space-y-1">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2 mb-2">
@@ -137,7 +130,6 @@ export function ReportDashboard({
         </>
       )}
 
-      {/* Industry & Target Audience */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
         <div>
           <p className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Industry</p>
@@ -149,7 +141,6 @@ export function ReportDashboard({
         </div>
       </div>
 
-      {/* Products & Services */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
         <div>
           <p className="font-bold text-gray-500 uppercase tracking-wider text-[10px] mb-1.5">Products</p>
@@ -177,7 +168,6 @@ export function ReportDashboard({
         </div>
       </div>
 
-      {/* Customer Pain Points */}
       {report.analysis.painPoints && report.analysis.painPoints.length > 0 && (
         <div className="space-y-1.5 text-xs">
           <h3 className="font-bold uppercase tracking-wider text-gray-500 text-[10px]">Customer Pain Points Solved</h3>
@@ -189,7 +179,6 @@ export function ReportDashboard({
         </div>
       )}
 
-      {/* SWOT Matrix */}
       <div className="pt-2 border-t border-gray-100 space-y-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
           SWOT Matrix
@@ -249,7 +238,6 @@ export function ReportDashboard({
         </div>
       </div>
 
-      {/* Business Risks */}
       {report.analysis.businessRisks && report.analysis.businessRisks.length > 0 && (
         <div className="pt-2 border-t border-gray-100 space-y-1.5 text-xs">
           <h3 className="font-bold uppercase tracking-wider text-gray-500 text-[10px]">Business Risks</h3>
@@ -261,7 +249,6 @@ export function ReportDashboard({
         </div>
       )}
 
-      {/* Verified Competitors */}
       <div className="pt-3 border-t border-gray-100 space-y-3">
         <div className="flex justify-between items-center">
           <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -300,7 +287,6 @@ export function ReportDashboard({
         )}
       </div>
 
-      {/* Sources & References */}
       {report.sources && report.sources.length > 0 && (
         <div className="pt-3 border-t border-gray-100 space-y-2">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
@@ -324,7 +310,6 @@ export function ReportDashboard({
         </div>
       )}
 
-      {/* Discord Integration */}
       <DiscordIntegration report={report} />
     </div>
   );

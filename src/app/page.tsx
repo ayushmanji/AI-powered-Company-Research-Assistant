@@ -31,7 +31,6 @@ export default function Home() {
       setError("Input is too long.");
       return;
     }
-    // Reject inputs with absolutely no letters (e.g. "123456" or "@@@@@")
     if (!/[a-zA-Z]/.test(trimmed)) {
       setError("Company not found. Please enter a valid company name or website URL.");
       return;
@@ -116,7 +115,6 @@ export default function Home() {
 
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto space-y-6">
-      {/* Header & Search */}
       <div className="text-center space-y-3">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
           {APP_NAME}
@@ -144,41 +142,35 @@ export default function Home() {
         </form>
       </div>
 
-      {/* Live ChatGPT-Style Research Progress Timeline */}
       {loading && <ProgressTimeline activeStepIndex={activeStepIndex} />}
 
-      {/* Error Output */}
       {error && (
         <div className="rounded-md bg-red-50 p-5 border border-red-200 text-sm text-red-800 max-w-xl mx-auto text-left shadow-sm">
-          <div className="flex items-start gap-3">
-            <span className="text-xl">⚠️</span>
-            <div>
-              <p className="font-bold text-red-900 mb-1">Unable to complete company research.</p>
-              {error === "Company not found. Please enter a valid company name or website URL." || error === "Input cannot be empty. Please enter a company name or website URL." || error === "Enter at least 2 characters." || error === "Input is too long." ? (
-                <div className="mt-1 text-red-700 space-y-2">
-                  <p className="font-bold">Company not found.</p>
-                  <p>Please enter a valid company name or website URL.</p>
+          <div>
+            <p className="font-bold text-red-900 mb-1">Unable to complete company research.</p>
+            {error === "Company not found. Please enter a valid company name or website URL." || error === "Input cannot be empty. Please enter a company name or website URL." || error === "Enter at least 2 characters." || error === "Input is too long." ? (
+              <div className="mt-1 text-red-700 space-y-2">
+                <p className="font-bold">Company not found.</p>
+                <p>Please enter a valid company name or website URL.</p>
+              </div>
+            ) : (
+              <>
+                <p className="mt-1 text-red-700 font-medium">{error}</p>
+                <div className="mt-3 text-red-700/80 text-xs space-y-1">
+                  <p>Possible reasons:</p>
+                  <ul className="list-disc list-inside">
+                    <li>Invalid company name</li>
+                    <li>Website unavailable</li>
+                    <li>API temporarily unavailable</li>
+                  </ul>
+                  <p className="mt-2">Please try another company or URL.</p>
                 </div>
-              ) : (
-                <>
-                  <p className="mt-1 text-red-700 font-medium">{error}</p>
-                  <div className="mt-3 text-red-700/80 text-xs space-y-1">
-                    <p>Possible reasons:</p>
-                    <ul className="list-disc list-inside">
-                      <li>Invalid company name</li>
-                      <li>Website unavailable</li>
-                      <li>API temporarily unavailable</li>
-                    </ul>
-                    <p className="mt-2">Please try another company or URL.</p>
-                  </div>
-                </>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {/* Complete Unified Research Output */}
       {report && (
         <ReportDashboard
           report={report}

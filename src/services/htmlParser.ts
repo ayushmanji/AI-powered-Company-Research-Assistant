@@ -20,7 +20,6 @@ export function extractPageTitle(html: string, fallbackUrl: string): string {
 export function extractCleanText(html: string): string {
   let cleaned = html;
 
-  // Remove scripts, styles, header, footer, nav, forms, svg, iframe, noscript
   cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ");
   cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ");
   cleaned = cleaned.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, " ");
@@ -31,17 +30,13 @@ export function extractCleanText(html: string): string {
   cleaned = cleaned.replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, " ");
   cleaned = cleaned.replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, " ");
 
-  // Convert block tags and breaks to newlines
   cleaned = cleaned.replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|tr|section|article)>/gi, "\n");
   cleaned = cleaned.replace(/<br\s*\/?>/gi, "\n");
 
-  // Strip all HTML tags
   cleaned = cleaned.replace(/<[^>]+>/g, " ");
 
-  // Decode entities
   cleaned = decodeHtmlEntities(cleaned);
 
-  // Normalize whitespace: trim lines and remove empty duplicate lines
   const lines = cleaned
     .split("\n")
     .map((line) => line.replace(/\s+/g, " ").trim())
@@ -64,9 +59,7 @@ export function extractInternalLinks(html: string, baseUrl: string, rootHostname
     try {
       const resolved = new URL(rawHref, baseUrl);
       
-      // Ensure matching HTTP(S) protocol and exact same root domain
       if ((resolved.protocol === "http:" || resolved.protocol === "https:") && isSameDomain(resolved.hostname, rootHostname)) {
-        // Strip fragment (#)
         resolved.hash = "";
         const cleanLink = resolved.href;
         if (!links.includes(cleanLink)) {
@@ -74,7 +67,6 @@ export function extractInternalLinks(html: string, baseUrl: string, rootHostname
         }
       }
     } catch {
-      // Ignore invalid URL structures
     }
   }
 

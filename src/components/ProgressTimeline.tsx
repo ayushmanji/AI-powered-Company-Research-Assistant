@@ -3,18 +3,17 @@ import React from "react";
 interface TimelineStep {
   id: string;
   label: string;
-  icon: string;
 }
 
 const PIPELINE_STEPS: TimelineStep[] = [
-  { id: "resolve", label: "Resolving company website...", icon: "🔍" },
-  { id: "resolved", label: "Company resolved", icon: "✅" },
-  { id: "crawl", label: "Crawling website pages...", icon: "🌐" },
-  { id: "extract", label: "Extracting company data...", icon: "📄" },
-  { id: "analyze", label: "AI analyzing company intelligence...", icon: "🤖" },
-  { id: "competitors", label: "Verifying competitors...", icon: "🏢" },
-  { id: "prepare", label: "Preparing final report...", icon: "📑" },
-  { id: "complete", label: "Research completed!", icon: "✅" },
+  { id: "resolve", label: "Resolving company website..." },
+  { id: "resolved", label: "Company resolved" },
+  { id: "crawl", label: "Crawling website pages..." },
+  { id: "extract", label: "Extracting company data..." },
+  { id: "analyze", label: "AI analyzing company intelligence..." },
+  { id: "competitors", label: "Verifying competitors..." },
+  { id: "prepare", label: "Preparing final report..." },
+  { id: "complete", label: "Research completed!" },
 ];
 
 interface ProgressTimelineProps {
@@ -43,8 +42,8 @@ export function ProgressTimeline({ activeStepIndex }: ProgressTimelineProps) {
                   : "text-gray-400 opacity-60"
               }`}
             >
-              <span className="text-base leading-none">
-                {isDone ? "✅" : isCurrent ? "⏳" : step.icon}
+              <span className="text-xs font-bold w-4 text-center leading-none">
+                {isDone ? "✓" : "•"}
               </span>
               <span className="flex-1">{step.label}</span>
               {isCurrent && (

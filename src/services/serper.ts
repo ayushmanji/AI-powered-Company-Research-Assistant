@@ -22,14 +22,12 @@ function extractNameFromUrl(url: string): string {
       return name.charAt(0).toUpperCase() + name.slice(1);
     }
   } catch {
-    // Fallback
   }
   return "Company";
 }
 
 function isDirectUrl(query: string): boolean {
   const trimmed = query.trim();
-  // Matches domain names like example.com, www.example.com, or http(s)://...
   const urlPattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/i;
   return urlPattern.test(trimmed);
 }
@@ -40,12 +38,10 @@ export async function resolveCompanyWebsite(query: string): Promise<ResolveCompa
     throw new Error("Company not found.");
   }
 
-  // Reject malformed schemas
   if (/^https?:\/\/?$/i.test(trimmedQuery) || /^htp:\/\//i.test(trimmedQuery)) {
     throw new Error("Company not found.");
   }
 
-  // If user provided a direct URL
   if (isDirectUrl(trimmedQuery)) {
     const website = cleanUrl(trimmedQuery);
     const companyName = extractNameFromUrl(website);
@@ -83,10 +79,8 @@ export async function resolveCompanyWebsite(query: string): Promise<ResolveCompa
     const link = topResult.link;
     const website = cleanUrl(link);
     
-    // Extract company name from result title or query
     let companyName = trimmedQuery;
     if (topResult.title) {
-      // Clean title if it contains domain or "Official Site"
       companyName = topResult.title
         .split(/[:|-]/)[0]
         .replace(/official/i, "")
