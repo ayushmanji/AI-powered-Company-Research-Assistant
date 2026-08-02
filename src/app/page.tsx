@@ -4,9 +4,27 @@ import { useState, FormEvent } from "react";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
 import { UnifiedResearchResponse } from "@/types";
 
+interface TimelineStep {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+const PIPELINE_STEPS: TimelineStep[] = [
+  { id: "resolve", label: "Resolving company website...", icon: "🔍" },
+  { id: "resolved", label: "Company resolved", icon: "✅" },
+  { id: "crawl", label: "Crawling website pages...", icon: "🌐" },
+  { id: "extract", label: "Extracting company data...", icon: "📄" },
+  { id: "analyze", label: "AI analyzing company intelligence...", icon: "🤖" },
+  { id: "competitors", label: "Verifying competitors...", icon: "🏢" },
+  { id: "prepare", label: "Preparing final report...", icon: "📑" },
+  { id: "complete", label: "Research completed!", icon: "✅" },
+];
+
 export default function Home() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [report, setReport] = useState<UnifiedResearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +40,15 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setReport(null);
+    setActiveStepIndex(0);
+
+    // Step simulation interval to provide a ChatGPT-style progressive timeline
+    const interval = setInterval(() => {
+      setActiveStepIndex((prev) => {
+        if (prev < 6) return prev + 1;
+        return prev;
+      });
+    }, 1800);
 
     try {
       const response = await fetch("/api/company/research", {
@@ -31,12 +58,16 @@ export default function Home() {
       });
 
       const data = await response.json();
+      clearInterval(interval);
+
       if (!response.ok) {
         throw new Error(data.error || "Failed to execute research pipeline.");
       }
 
+      setActiveStepIndex(7); // Complete step
       setReport(data as UnifiedResearchResponse);
     } catch (err: unknown) {
+      clearInterval(interval);
       const msg = err instanceof Error ? err.message : "An unexpected error occurred during research.";
       setError(msg);
     } finally {
@@ -103,12 +134,40 @@ export default function Home() {
           </button>
         </form>
 
+        {/* Live ChatGPT-Style Research Progress Timeline */}
         {loading && (
-          <div className="mt-6 rounded-md bg-blue-50 p-6 border border-blue-200 text-sm text-blue-700 max-w-xl mx-auto text-center space-y-2">
-            <p className="font-semibold text-base">Executing Research Pipeline...</p>
-            <p className="text-xs text-blue-600">
-              Resolving website • Crawling pages • Extracting data • AI Analysis • Verifying competitors
-            </p>
+          <div className="mt-6 rounded-md bg-white p-6 border border-gray-200 text-left max-w-md mx-auto space-y-3 shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-100 pb-2">
+              Live Research Progress Timeline
+            </h3>
+            <div className="space-y-2.5 pt-1">
+              {PIPELINE_STEPS.map((step, idx) => {
+                const isDone = idx < activeStepIndex;
+                const isCurrent = idx === activeStepIndex;
+                const isUpcoming = idx > activeStepIndex;
+
+                return (
+                  <div
+                    key={step.id}
+                    className={`flex items-center gap-3 text-xs transition-opacity ${
+                      isDone
+                        ? "text-gray-900 font-medium"
+                        : isCurrent
+                        ? "text-blue-600 font-semibold"
+                        : "text-gray-400 opacity-60"
+                    }`}
+                  >
+                    <span className="text-base leading-none">
+                      {isDone ? "✅" : isCurrent ? "⏳" : step.icon}
+                    </span>
+                    <span className="flex-1">{step.label}</span>
+                    {isCurrent && (
+                      <span className="inline-block h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
