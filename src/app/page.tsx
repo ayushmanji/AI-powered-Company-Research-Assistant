@@ -7,6 +7,7 @@ import {
   CrawledPage,
   StructuredCompanyData,
   AiResearchAnalysis,
+  VerifiedCompetitor,
 } from "@/types";
 
 export default function Home() {
@@ -15,20 +16,16 @@ export default function Home() {
   const [result, setResult] = useState<ResolveCompanyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Crawl state
+  // Pipeline states
   const [crawling, setCrawling] = useState(false);
-  const [crawlError, setCrawlError] = useState<string | null>(null);
+  const [crawlingText, setCrawlingText] = useState("Processing Pipeline...");
+  const [pipelineError, setPipelineError] = useState<string | null>(null);
+
+  // Data states
   const [crawledPages, setCrawledPages] = useState<CrawledPage[] | null>(null);
-
-  // Structured Data state
-  const [extracting, setExtracting] = useState(false);
-  const [extractError, setExtractError] = useState<string | null>(null);
   const [structuredData, setStructuredData] = useState<StructuredCompanyData | null>(null);
-
-  // AI Analysis state
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AiResearchAnalysis | null>(null);
+  const [verifiedCompetitors, setVerifiedCompetitors] = useState<VerifiedCompetitor[] | null>(null);
 
   const handleResolve = async (e: FormEvent) => {
     e.preventDefault();
@@ -42,23 +39,19 @@ export default function Home() {
     setError(null);
     setResult(null);
     setCrawledPages(null);
-    setCrawlError(null);
     setStructuredData(null);
-    setExtractError(null);
     setAnalysis(null);
-    setAnalyzeError(null);
+    setVerifiedCompetitors(null);
+    setPipelineError(null);
 
     try {
       const response = await fetch("/api/company/resolve", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: trimmed }),
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || "Failed to resolve company website.");
       }
@@ -72,101 +65,75 @@ export default function Home() {
     }
   };
 
-  const handleCrawlAndAnalyze = async () => {
+  const handleRunFullPipeline = async () => {
     if (!result?.website) return;
 
     setCrawling(true);
-    setCrawlError(null);
+    setPipelineError(null);
     setCrawledPages(null);
     setStructuredData(null);
-    setExtractError(null);
     setAnalysis(null);
-    setAnalyzeError(null);
+    setVerifiedCompetitors(null);
 
     try {
-      // Step 1: Crawl
-      const response = await fetch("/api/company/crawl", {
+      // Step 1: Crawl Website
+      setCrawlingText("Crawling website pages...");
+      const crawlRes = await fetch("/api/company/crawl", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ website: result.website }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to crawl website.");
-      }
-
-      const pages = data.pages as CrawledPage[];
+      const crawlData = await crawlRes.json();
+      if (!crawlRes.ok) throw new Error(crawlData.error || "Failed to crawl website.");
+      const pages = crawlData.pages as CrawledPage[];
       setCrawledPages(pages);
 
       // Step 2: Extract Structured Data
-      const structData = await handleExtractData(pages);
-      if (structData) {
-        // Step 3: Run AI Analysis
-        await handleRunAiAnalysis(structData);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred while processing.";
-      setCrawlError(msg);
-    } finally {
-      setCrawling(false);
-    }
-  };
-
-  const handleExtractData = async (pages: CrawledPage[]): Promise<StructuredCompanyData | null> => {
-    setExtracting(true);
-    setExtractError(null);
-
-    try {
-      const response = await fetch("/api/company/extract", {
+      setCrawlingText("Structuring company data...");
+      const extractRes = await fetch("/api/company/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyName: result?.companyName || "",
-          website: result?.website || "",
+          companyName: result.companyName,
+          website: result.website,
           pages,
         }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to extract structured data.");
-      }
-
-      const sData = data.structuredData as StructuredCompanyData;
+      const extractData = await extractRes.json();
+      if (!extractRes.ok) throw new Error(extractData.error || "Failed to extract structured data.");
+      const sData = extractData.structuredData as StructuredCompanyData;
       setStructuredData(sData);
-      return sData;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred during extraction.";
-      setExtractError(msg);
-      return null;
-    } finally {
-      setExtracting(false);
-    }
-  };
 
-  const handleRunAiAnalysis = async (structData: StructuredCompanyData) => {
-    setAnalyzing(true);
-    setAnalyzeError(null);
-
-    try {
-      const response = await fetch("/api/company/analyze", {
+      // Step 3: AI Analysis
+      setCrawlingText("Synthesizing AI Research Analysis...");
+      const analyzeRes = await fetch("/api/company/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ company: structData }),
+        body: JSON.stringify({ company: sData }),
       });
+      const analyzeData = await analyzeRes.json();
+      if (!analyzeRes.ok) throw new Error(analyzeData.error || "Failed to generate AI analysis.");
+      const aiAnalysis = analyzeData.analysis as AiResearchAnalysis;
+      setAnalysis(aiAnalysis);
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to generate AI analysis.");
+      // Step 4: Verify Competitors via Serper
+      if (aiAnalysis.competitorSuggestions && aiAnalysis.competitorSuggestions.length > 0) {
+        setCrawlingText("Verifying competitors via Serper...");
+        const compRes = await fetch("/api/company/competitors", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ competitors: aiAnalysis.competitorSuggestions }),
+        });
+        const compData = await compRes.json();
+        if (compRes.ok && compData.verifiedCompetitors) {
+          setVerifiedCompetitors(compData.verifiedCompetitors as VerifiedCompetitor[]);
+        }
       }
-
-      setAnalysis(data.analysis as AiResearchAnalysis);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred during AI analysis.";
-      setAnalyzeError(msg);
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred in the pipeline.";
+      setPipelineError(msg);
     } finally {
-      setAnalyzing(false);
+      setCrawling(false);
     }
   };
 
@@ -184,12 +151,12 @@ export default function Home() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter company name or URL..."
-            disabled={loading || crawling || extracting || analyzing}
+            disabled={loading || crawling}
             className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
           <button
             type="submit"
-            disabled={loading || crawling || extracting || analyzing || !query.trim()}
+            disabled={loading || crawling || !query.trim()}
             className="rounded-md bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus:outline-none disabled:bg-blue-300 disabled:cursor-not-allowed"
           >
             {loading ? "Resolving..." : "Search"}
@@ -227,38 +194,26 @@ export default function Home() {
             <div className="pt-2 border-t border-gray-100">
               <button
                 type="button"
-                onClick={handleCrawlAndAnalyze}
-                disabled={crawling || extracting || analyzing}
+                onClick={handleRunFullPipeline}
+                disabled={crawling}
                 className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 focus:outline-none disabled:bg-emerald-300 disabled:cursor-not-allowed transition-colors"
               >
-                {crawling
-                  ? "Crawling Website..."
-                  : extracting
-                  ? "Extracting Data..."
-                  : analyzing
-                  ? "Generating AI Analysis..."
-                  : "Run Research Pipeline"}
+                {crawling ? "Running Pipeline..." : "Run Research Pipeline"}
               </button>
             </div>
           </div>
         )}
 
-        {(crawling || extracting || analyzing) && (
+        {crawling && (
           <div className="mt-4 rounded-md bg-blue-50 p-4 border border-blue-200 text-sm text-blue-700 max-w-xl mx-auto text-center">
-            <p className="font-medium">
-              {crawling
-                ? "Crawling website pages..."
-                : extracting
-                ? "Structuring company data..."
-                : "Synthesizing AI Research Analysis..."}
-            </p>
+            <p className="font-medium">{crawlingText}</p>
           </div>
         )}
 
-        {(crawlError || extractError || analyzeError) && (
+        {pipelineError && (
           <div className="mt-4 rounded-md bg-red-50 p-4 border border-red-200 text-sm text-red-700 max-w-xl mx-auto text-left">
-            <p className="font-medium">Analysis Pipeline Error</p>
-            <p className="mt-1 text-red-600">{crawlError || extractError || analyzeError}</p>
+            <p className="font-medium">Pipeline Error</p>
+            <p className="mt-1 text-red-600">{pipelineError}</p>
           </div>
         )}
 
@@ -272,7 +227,6 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Executive Summary */}
             {analysis.summary && (
               <div className="space-y-1">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -282,7 +236,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* Industry & Target Audience */}
             <div className="grid grid-cols-2 gap-4 text-xs">
               {analysis.industry && (
                 <div>
@@ -298,7 +251,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Products & Services */}
             <div className="grid grid-cols-2 gap-4 text-xs">
               {analysis.products.length > 0 && (
                 <div>
@@ -321,18 +273,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-
-            {/* Customer Pain Points */}
-            {analysis.painPoints.length > 0 && (
-              <div className="space-y-1 text-xs">
-                <h4 className="font-semibold text-gray-500">Customer Pain Points Solved</h4>
-                <ul className="list-disc list-inside text-gray-800 space-y-0.5">
-                  {analysis.painPoints.map((point, idx) => (
-                    <li key={idx}>{point}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             {/* SWOT Matrix */}
             <div className="pt-2 border-t border-gray-100 space-y-3">
@@ -375,38 +315,44 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Competitor Suggestions */}
-            {analysis.competitorSuggestions.length > 0 && (
-              <div className="pt-2 border-t border-gray-100 text-xs">
-                <p className="font-semibold text-gray-500 mb-1">Suggested Competitors</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {analysis.competitorSuggestions.map((comp, idx) => (
-                    <span key={idx} className="bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200 font-medium">
-                      {comp}
-                    </span>
+            {/* Verified Competitors */}
+            {verifiedCompetitors && verifiedCompetitors.length > 0 && (
+              <div className="pt-3 border-t border-gray-100 space-y-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Verified Competitors ({verifiedCompetitors.length})
+                  </h4>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
+                    Serper Verified
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {verifiedCompetitors.map((comp, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-2.5 bg-gray-50 rounded border border-gray-200 text-xs">
+                      <div>
+                        <p className="font-bold text-gray-900">{comp.name}</p>
+                        <a
+                          href={comp.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-blue-600 hover:underline"
+                        >
+                          {comp.website}
+                        </a>
+                      </div>
+                      <div className="text-right space-x-1">
+                        <span className="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-[10px] font-medium">
+                          {comp.industry}
+                        </span>
+                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[10px] font-medium">
+                          {comp.country}
+                        </span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Structured Data Snapshot */}
-        {structuredData && (
-          <div className="mt-6 rounded-md bg-white p-6 border border-gray-200 text-left max-w-xl mx-auto space-y-4 shadow-sm">
-            <div className="border-b border-gray-100 pb-3 flex justify-between items-center">
-              <h3 className="text-sm font-bold text-gray-900">Structured Data Snapshot</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <p className="font-semibold text-gray-500">Phone</p>
-                <p className="text-gray-900 font-medium">{structuredData.phone}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-500">Emails</p>
-                <p className="text-gray-900 font-medium">{structuredData.emails.join(", ") || "None"}</p>
-              </div>
-            </div>
           </div>
         )}
       </div>

@@ -72,3 +72,18 @@ export interface AnalyzeCompanyRequest {
 export interface AnalyzeCompanyResponse {
   analysis: AiResearchAnalysis;
 }
+
+export interface VerifiedCompetitor {
+  name: string;
+  website: string;
+  industry: string;
+  country: string;
+}
+
+export interface VerifyCompetitorsRequest {
+  competitors: string[];
+}
+
+export interface VerifyCompetitorsResponse {
+  verifiedCompetitors: VerifiedCompetitor[];
+}
