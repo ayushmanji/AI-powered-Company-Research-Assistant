@@ -1,5 +1,5 @@
 import { CrawledPage } from "@/types";
-import { extractCleanText, extractPageTitle, extractInternalLinks } from "./extractor";
+import { extractCleanText, extractPageTitle, extractInternalLinks } from "./htmlParser";
 
 const PRIORITY_KEYWORDS = [
   "about",
@@ -84,6 +84,7 @@ async function fetchPageWithTimeout(urlStr: string, timeoutMs: number = 6000): P
     clearTimeout(timeoutId);
 
     if (!response.ok) {
+      console.warn(`Unable to crawl this website (HTTP ${response.status}): ${urlStr}`);
       return null;
     }
 
@@ -93,8 +94,9 @@ async function fetchPageWithTimeout(urlStr: string, timeoutMs: number = 6000): P
     }
 
     return await response.text();
-  } catch {
+  } catch (err) {
     clearTimeout(timeoutId);
+    console.error(`Unable to crawl this website (Network/SSL Error): ${urlStr}`, err);
     return null;
   }
 }

@@ -51,18 +51,34 @@ export interface ExtractDataResponse {
   structuredData: StructuredCompanyData;
 }
 
+export interface AiCompetitor {
+  name: string;
+  category: string;
+  whyCompetitor: string;
+}
+
 export interface AiResearchAnalysis {
+  isCompanyFound: boolean;
   summary: string;
   industry: string;
   targetAudience: string;
+  keyMetrics: {
+    founded: string;
+    headquarters: string;
+    industry: string;
+    businessModel: string;
+    operatingCountries: string;
+    website: string;
+  };
   products: string[];
   services: string[];
   painPoints: string[];
+  businessRisks: string[];
   strengths: string[];
   weaknesses: string[];
   opportunities: string[];
   threats: string[];
-  competitorSuggestions: string[];
+  competitorSuggestions: AiCompetitor[];
 }
 
 export interface AnalyzeCompanyRequest {
@@ -76,12 +92,12 @@ export interface AnalyzeCompanyResponse {
 export interface VerifiedCompetitor {
   name: string;
   website: string;
-  industry: string;
-  country: string;
+  category: string;
+  whyCompetitor: string;
 }
 
 export interface VerifyCompetitorsRequest {
-  competitorSuggestions: string[];
+  competitorSuggestions: AiCompetitor[];
 }
 
 export interface VerifyCompetitorsResponse {

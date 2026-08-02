@@ -1,4 +1,4 @@
-import { VerifiedCompetitor } from "@/types";
+import { VerifiedCompetitor, AiCompetitor } from "@/types";
 
 function cleanUrl(input: string): string {
   let urlStr = input.trim();
@@ -42,10 +42,10 @@ function extractIndustry(text: string, defaultName: string): string {
 }
 
 export async function verifyCompetitor(
-  compName: string,
+  comp: AiCompetitor,
   apiKey: string
 ): Promise<VerifiedCompetitor | null> {
-  const trimmed = compName.trim();
+  const trimmed = comp.name.trim();
   if (!trimmed) return null;
 
   try {
@@ -72,21 +72,11 @@ export async function verifyCompetitor(
     let officialName = data.knowledgeGraph?.title || organic.title || trimmed;
     officialName = officialName.split(/[:|-]/)[0].trim() || trimmed;
 
-    const contextText = `${data.knowledgeGraph?.description || ""} ${data.knowledgeGraph?.attributes?.Headquarters || ""} ${organic.snippet || ""}`;
-
-    const country = data.knowledgeGraph?.attributes?.Headquarters
-      ? extractCountry(data.knowledgeGraph.attributes.Headquarters)
-      : extractCountry(contextText);
-
-    const industry = data.knowledgeGraph?.type
-      ? data.knowledgeGraph.type
-      : extractIndustry(contextText, officialName);
-
     return {
       name: officialName,
       website,
-      industry,
-      country,
+      category: comp.category || "Competitor",
+      whyCompetitor: comp.whyCompetitor || "N/A",
     };
   } catch {
     return null;
@@ -94,15 +84,15 @@ export async function verifyCompetitor(
 }
 
 export async function verifyCompetitorsList(
-  competitorSuggestions: string[]
+  competitorSuggestions: AiCompetitor[]
 ): Promise<VerifiedCompetitor[]> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) {
     throw new Error("SERPER_API_KEY environment variable is not configured");
   }
 
-  const uniqueNames = Array.from(new Set(competitorSuggestions.map((n) => n.trim()))).slice(0, 5);
-  const promises = uniqueNames.map((name) => verifyCompetitor(name, apiKey));
+  const uniqueComps = Array.from(new Map(competitorSuggestions.map(comp => [comp.name.trim(), comp])).values()).slice(0, 5);
+  const promises = uniqueComps.map((comp) => verifyCompetitor(comp, apiKey));
   const results = await Promise.all(promises);
 
   const verified: VerifiedCompetitor[] = [];

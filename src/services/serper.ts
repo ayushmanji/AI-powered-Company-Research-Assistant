@@ -36,8 +36,13 @@ function isDirectUrl(query: string): boolean {
 
 export async function resolveCompanyWebsite(query: string): Promise<ResolveCompanyResponse> {
   const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
-    throw new Error("Search query cannot be empty");
+  if (!trimmedQuery || trimmedQuery.length < 2 || !/[a-zA-Z]/.test(trimmedQuery)) {
+    throw new Error("Company not found.");
+  }
+
+  // Reject malformed schemas
+  if (/^https?:\/\/?$/i.test(trimmedQuery) || /^htp:\/\//i.test(trimmedQuery)) {
+    throw new Error("Company not found.");
   }
 
   // If user provided a direct URL
@@ -97,5 +102,5 @@ export async function resolveCompanyWebsite(query: string): Promise<ResolveCompa
     };
   }
 
-  throw new Error("No official website found for the specified company");
+  throw new Error("Company not found.");
 }

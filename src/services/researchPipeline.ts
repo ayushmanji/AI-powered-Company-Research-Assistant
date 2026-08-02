@@ -1,6 +1,6 @@
 import { resolveCompanyWebsite } from "./serper";
 import { crawlWebsite } from "./crawler";
-import { extractStructuredCompanyData } from "./dataExtractor";
+import { extractStructuredCompanyData } from "./entityExtractor";
 import { analyzeCompanyData } from "./llm";
 import { verifyCompetitorsList } from "./competitors";
 import { UnifiedResearchResponse, VerifiedCompetitor, CrawledPage } from "@/types";

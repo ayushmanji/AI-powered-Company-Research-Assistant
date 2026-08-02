@@ -41,9 +41,16 @@ export async function POST(request: Request) {
       );
     }
 
+    if (errorMessage.includes("Company not found") || errorMessage.includes("No organic results") || errorMessage.includes("No official website found")) {
+      return NextResponse.json(
+        { success: false, error: "Company not found.", message: "Company not found." },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(
-      { error: errorMessage },
-      { status: 502 }
+      { success: false, error: errorMessage, message: errorMessage },
+      { status: 500 }
     );
   }
 }
