@@ -88,18 +88,12 @@ export interface VerifyCompetitorsResponse {
   competitors: VerifiedCompetitor[];
 }
 
-export interface FinalResearchReport {
+export interface UnifiedResearchResponse {
   company: ResolveCompanyResponse;
-  structuredData: StructuredCompanyData;
   analysis: AiResearchAnalysis;
   competitors: VerifiedCompetitor[];
-  generatedAt: string;
 }
 
 export interface ResearchPipelineRequest {
   query: string;
-}
-
-export interface ResearchPipelineResponse {
-  report: FinalResearchReport;
 }

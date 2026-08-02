@@ -22,8 +22,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const report = await runResearchPipeline(query);
-    return NextResponse.json({ report }, { status: 200 });
+    const result = await runResearchPipeline(query);
+    return NextResponse.json(result, { status: 200 });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during research pipeline execution";
 

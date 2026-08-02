@@ -2,12 +2,12 @@
 
 import { useState, FormEvent } from "react";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
-import { FinalResearchReport } from "@/types";
+import { UnifiedResearchResponse } from "@/types";
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<FinalResearchReport | null>(null);
+  const [report, setReport] = useState<UnifiedResearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: FormEvent) => {
@@ -31,10 +31,10 @@ export default function Home() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate company research report.");
+        throw new Error(data.error || "Failed to execute research pipeline.");
       }
 
-      setReport(data.report as FinalResearchReport);
+      setReport(data as UnifiedResearchResponse);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "An unexpected error occurred during research.";
       setError(msg);
@@ -56,7 +56,7 @@ export default function Home() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter company name or URL (e.g. Stripe, Microsoft)..."
+            placeholder="Enter company name or URL (e.g. Microsoft, Stripe)..."
             disabled={loading}
             className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
@@ -71,9 +71,9 @@ export default function Home() {
 
         {loading && (
           <div className="mt-6 rounded-md bg-blue-50 p-6 border border-blue-200 text-sm text-blue-700 max-w-xl mx-auto text-center space-y-2">
-            <p className="font-semibold text-base">Running Research Pipeline...</p>
+            <p className="font-semibold text-base">Executing Unified Research Pipeline...</p>
             <p className="text-xs text-blue-600">
-              Resolving website • Crawling pages • Structuring data • AI Analysis • Verifying competitors
+              Resolving website • Crawling pages • Extracting data • AI Analysis • Verifying competitors
             </p>
           </div>
         )}
@@ -85,7 +85,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Complete Final Research Report Output */}
+        {/* Complete Unified Research Output */}
         {report && (
           <div className="mt-6 rounded-md bg-white p-6 border border-gray-200 text-left max-w-xl mx-auto space-y-6 shadow-sm">
             {/* Header / Company Resolved Details */}
@@ -139,7 +139,7 @@ export default function Home() {
 
             {/* Products & Services */}
             <div className="grid grid-cols-2 gap-4 text-xs">
-              {report.analysis.products.length > 0 && (
+              {report.analysis.products && report.analysis.products.length > 0 && (
                 <div>
                   <p className="font-semibold text-gray-500 mb-1">Products</p>
                   <ul className="list-disc list-inside text-gray-800 space-y-0.5">
@@ -149,7 +149,7 @@ export default function Home() {
                   </ul>
                 </div>
               )}
-              {report.analysis.services.length > 0 && (
+              {report.analysis.services && report.analysis.services.length > 0 && (
                 <div>
                   <p className="font-semibold text-gray-500 mb-1">Services</p>
                   <ul className="list-disc list-inside text-gray-800 space-y-0.5">
@@ -162,7 +162,7 @@ export default function Home() {
             </div>
 
             {/* Customer Pain Points */}
-            {report.analysis.painPoints.length > 0 && (
+            {report.analysis.painPoints && report.analysis.painPoints.length > 0 && (
               <div className="space-y-1 text-xs">
                 <h3 className="font-semibold text-gray-500">Customer Pain Points Solved</h3>
                 <ul className="list-disc list-inside text-gray-800 space-y-0.5">
@@ -182,7 +182,7 @@ export default function Home() {
                 <div className="bg-emerald-50 border border-emerald-100 p-3 rounded">
                   <p className="font-bold text-emerald-800 mb-1">Strengths</p>
                   <ul className="list-disc list-inside text-emerald-950 space-y-0.5">
-                    {report.analysis.strengths.map((item, idx) => (
+                    {report.analysis.strengths?.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
                   </ul>
@@ -190,7 +190,7 @@ export default function Home() {
                 <div className="bg-amber-50 border border-amber-100 p-3 rounded">
                   <p className="font-bold text-amber-800 mb-1">Weaknesses</p>
                   <ul className="list-disc list-inside text-amber-950 space-y-0.5">
-                    {report.analysis.weaknesses.map((item, idx) => (
+                    {report.analysis.weaknesses?.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
                   </ul>
@@ -198,7 +198,7 @@ export default function Home() {
                 <div className="bg-blue-50 border border-blue-100 p-3 rounded">
                   <p className="font-bold text-blue-800 mb-1">Opportunities</p>
                   <ul className="list-disc list-inside text-blue-950 space-y-0.5">
-                    {report.analysis.opportunities.map((item, idx) => (
+                    {report.analysis.opportunities?.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
                   </ul>
@@ -206,7 +206,7 @@ export default function Home() {
                 <div className="bg-rose-50 border border-rose-100 p-3 rounded">
                   <p className="font-bold text-rose-800 mb-1">Threats</p>
                   <ul className="list-disc list-inside text-rose-950 space-y-0.5">
-                    {report.analysis.threats.map((item, idx) => (
+                    {report.analysis.threats?.map((item, idx) => (
                       <li key={idx}>{item}</li>
                     ))}
                   </ul>
@@ -248,28 +248,6 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Discovered Pages */}
-            {report.structuredData.importantPages.length > 0 && (
-              <div className="pt-2 border-t border-gray-100 text-xs">
-                <p className="font-semibold text-gray-500 mb-1">
-                  Discovered Pages ({report.structuredData.importantPages.length})
-                </p>
-                <div className="space-y-1 max-h-28 overflow-y-auto">
-                  {report.structuredData.importantPages.map((url, idx) => (
-                    <a
-                      key={idx}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline block truncate text-[11px]"
-                    >
-                      {url}
-                    </a>
                   ))}
                 </div>
               </div>
