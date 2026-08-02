@@ -14,3 +14,17 @@ export interface ResolveCompanyResponse {
 export interface ApiErrorResponse {
   error: string;
 }
+
+export interface CrawledPage {
+  url: string;
+  title: string;
+  content: string;
+}
+
+export interface CrawlCompanyRequest {
+  website: string;
+}
+
+export interface CrawlCompanyResponse {
+  pages: CrawledPage[];
+}
