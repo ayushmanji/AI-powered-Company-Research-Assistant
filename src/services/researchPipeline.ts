@@ -43,9 +43,24 @@ export async function runResearchPipeline(query: string): Promise<UnifiedResearc
     }
   }
 
+  const sources = Array.from(
+    new Set([
+      company.website,
+      ...pages.map((p) => p.url),
+      ...structuredData.importantPages,
+    ])
+  ).slice(0, 8);
+
   return {
     company,
     analysis,
     competitors,
+    sources,
+    metrics: {
+      pagesCrawled: pages.length || 1,
+      productsFound: (analysis.products && analysis.products.length) || structuredData.products.length,
+      servicesFound: (analysis.services && analysis.services.length) || structuredData.services.length,
+      competitorsFound: competitors.length,
+    },
   };
 }

@@ -92,6 +92,13 @@ export interface UnifiedResearchResponse {
   company: ResolveCompanyResponse;
   analysis: AiResearchAnalysis;
   competitors: VerifiedCompetitor[];
+  sources?: string[];
+  metrics?: {
+    pagesCrawled: number;
+    productsFound: number;
+    servicesFound: number;
+    competitorsFound: number;
+  };
 }
 
 export interface ResearchPipelineRequest {

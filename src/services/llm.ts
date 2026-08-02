@@ -6,7 +6,7 @@ export async function analyzeCompanyData(
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return {
-      summary: "AI analysis is currently unavailable because the AI service API key is not configured in the server environment.",
+      summary: "AI analysis is temporarily unavailable. Please configure the OpenRouter API key and try again.",
       industry: "Not analyzed",
       targetAudience: "Not analyzed",
       products: company.products || [],
@@ -57,7 +57,6 @@ Important Discovered Pages: ${company.importantPages.join(", ")}`;
     return parseAndValidateAiResponse(response);
   } catch {
     try {
-      // Retry once if JSON parsing fails
       const retryPrompt = `${systemPrompt}\nCRITICAL: Your previous response failed JSON parsing. Output ONLY raw JSON without any markdown formatting or prefix text.`;
       const response = await callOpenRouter(apiKey, model, retryPrompt, userPrompt);
       return parseAndValidateAiResponse(response);
@@ -65,7 +64,7 @@ Important Discovered Pages: ${company.importantPages.join(", ")}`;
       const msg = retryError instanceof Error ? retryError.message : "AI service unavailable";
       console.error("OpenRouter LLM analysis error:", msg);
       return {
-        summary: "AI analysis is currently unavailable because the AI service encountered an error.",
+        summary: "AI analysis is temporarily unavailable. Please configure the OpenRouter API key and try again.",
         industry: "Not analyzed",
         targetAudience: "Not analyzed",
         products: company.products || [],
