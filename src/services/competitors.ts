@@ -69,11 +69,9 @@ export async function verifyCompetitor(
 
     const website = cleanUrl(organic.link);
 
-    // Name extraction from Knowledge Graph or Title
     let officialName = data.knowledgeGraph?.title || organic.title || trimmed;
     officialName = officialName.split(/[:|-]/)[0].trim() || trimmed;
 
-    // Snippet + Knowledge Graph description text
     const contextText = `${data.knowledgeGraph?.description || ""} ${data.knowledgeGraph?.attributes?.Headquarters || ""} ${organic.snippet || ""}`;
 
     const country = data.knowledgeGraph?.attributes?.Headquarters
@@ -96,14 +94,14 @@ export async function verifyCompetitor(
 }
 
 export async function verifyCompetitorsList(
-  competitorNames: string[]
+  competitorSuggestions: string[]
 ): Promise<VerifiedCompetitor[]> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) {
     throw new Error("SERPER_API_KEY environment variable is not configured");
   }
 
-  const uniqueNames = Array.from(new Set(competitorNames.map((n) => n.trim()))).slice(0, 5);
+  const uniqueNames = Array.from(new Set(competitorSuggestions.map((n) => n.trim()))).slice(0, 5);
   const promises = uniqueNames.map((name) => verifyCompetitor(name, apiKey));
   const results = await Promise.all(promises);
 

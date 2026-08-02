@@ -116,17 +116,17 @@ export default function Home() {
       const aiAnalysis = analyzeData.analysis as AiResearchAnalysis;
       setAnalysis(aiAnalysis);
 
-      // Step 4: Verify Competitors via Serper
+      // Step 4: Automatically Verify Competitors via Serper
       if (aiAnalysis.competitorSuggestions && aiAnalysis.competitorSuggestions.length > 0) {
         setCrawlingText("Verifying competitors via Serper...");
         const compRes = await fetch("/api/company/competitors", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ competitors: aiAnalysis.competitorSuggestions }),
+          body: JSON.stringify({ competitorSuggestions: aiAnalysis.competitorSuggestions }),
         });
         const compData = await compRes.json();
-        if (compRes.ok && compData.verifiedCompetitors) {
-          setVerifiedCompetitors(compData.verifiedCompetitors as VerifiedCompetitor[]);
+        if (compRes.ok && compData.competitors) {
+          setVerifiedCompetitors(compData.competitors as VerifiedCompetitor[]);
         }
       }
     } catch (err: unknown) {
@@ -315,27 +315,28 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Verified Competitors */}
-            {verifiedCompetitors && verifiedCompetitors.length > 0 && (
-              <div className="pt-3 border-t border-gray-100 space-y-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                    Verified Competitors ({verifiedCompetitors.length})
-                  </h4>
-                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
-                    Serper Verified
-                  </span>
-                </div>
+            {/* Verified Competitors Section replacing raw suggestions */}
+            <div className="pt-3 border-t border-gray-100 space-y-3">
+              <div className="flex justify-between items-center">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Verified Competitors & Market Landscape
+                </h4>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
+                  Serper Verified
+                </span>
+              </div>
+
+              {verifiedCompetitors && verifiedCompetitors.length > 0 ? (
                 <div className="space-y-2">
                   {verifiedCompetitors.map((comp, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-2.5 bg-gray-50 rounded border border-gray-200 text-xs">
+                    <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded border border-gray-200 text-xs">
                       <div>
                         <p className="font-bold text-gray-900">{comp.name}</p>
                         <a
                           href={comp.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[11px] text-blue-600 hover:underline"
+                          className="text-[11px] text-blue-600 hover:underline break-all"
                         >
                           {comp.website}
                         </a>
@@ -351,8 +352,10 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-xs text-gray-500">Verifying competitors list...</p>
+              )}
+            </div>
           </div>
         )}
       </div>

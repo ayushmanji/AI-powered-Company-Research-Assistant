@@ -14,16 +14,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const { competitors } = body;
-    if (!competitors || !Array.isArray(competitors) || competitors.length === 0) {
+    const { competitorSuggestions } = body;
+    if (!competitorSuggestions || !Array.isArray(competitorSuggestions) || competitorSuggestions.length === 0) {
       return NextResponse.json(
-        { error: "Competitors array is required" },
+        { error: "competitorSuggestions array is required" },
         { status: 400 }
       );
     }
 
-    const verifiedCompetitors = await verifyCompetitorsList(competitors);
-    return NextResponse.json({ verifiedCompetitors }, { status: 200 });
+    const competitors = await verifyCompetitorsList(competitorSuggestions);
+    return NextResponse.json({ competitors }, { status: 200 });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during competitor verification";
 

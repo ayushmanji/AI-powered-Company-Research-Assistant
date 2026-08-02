@@ -81,9 +81,9 @@ export interface VerifiedCompetitor {
 }
 
 export interface VerifyCompetitorsRequest {
-  competitors: string[];
+  competitorSuggestions: string[];
 }
 
 export interface VerifyCompetitorsResponse {
-  verifiedCompetitors: VerifiedCompetitor[];
+  competitors: VerifiedCompetitor[];
 }
