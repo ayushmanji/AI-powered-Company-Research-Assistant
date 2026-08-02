@@ -50,3 +50,25 @@ export interface ExtractDataRequest {
 export interface ExtractDataResponse {
   structuredData: StructuredCompanyData;
 }
+
+export interface AiResearchAnalysis {
+  summary: string;
+  industry: string;
+  targetAudience: string;
+  products: string[];
+  services: string[];
+  painPoints: string[];
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+  competitorSuggestions: string[];
+}
+
+export interface AnalyzeCompanyRequest {
+  company: StructuredCompanyData;
+}
+
+export interface AnalyzeCompanyResponse {
+  analysis: AiResearchAnalysis;
+}
