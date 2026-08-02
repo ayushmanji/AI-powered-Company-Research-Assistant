@@ -7,6 +7,7 @@ import { UnifiedResearchResponse } from "@/types";
 export default function Home() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [report, setReport] = useState<UnifiedResearchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +44,39 @@ export default function Home() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!report) return;
+
+    setDownloadingPdf(true);
+    try {
+      const response = await fetch("/api/company/export-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ report }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF report.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cleanName = (report.company.companyName || "company").toLowerCase().replace(/[^a-z0-9]/g, "-");
+      a.download = `${cleanName}-research-report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download PDF report.";
+      alert(msg);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center space-y-6">
@@ -71,7 +105,7 @@ export default function Home() {
 
         {loading && (
           <div className="mt-6 rounded-md bg-blue-50 p-6 border border-blue-200 text-sm text-blue-700 max-w-xl mx-auto text-center space-y-2">
-            <p className="font-semibold text-base">Executing Unified Research Pipeline...</p>
+            <p className="font-semibold text-base">Executing Research Pipeline...</p>
             <p className="text-xs text-blue-600">
               Resolving website • Crawling pages • Extracting data • AI Analysis • Verifying competitors
             </p>
@@ -106,9 +140,19 @@ export default function Home() {
                   {report.company.website}
                 </a>
               </div>
-              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
-                Pipeline Complete
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
+                  Pipeline Complete
+                </span>
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  disabled={downloadingPdf}
+                  className="rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 focus:outline-none disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {downloadingPdf ? "Generating PDF..." : "Download PDF Report"}
+                </button>
+              </div>
             </div>
 
             {/* Executive Summary */}
