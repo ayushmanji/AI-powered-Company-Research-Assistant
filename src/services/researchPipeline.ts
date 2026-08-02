@@ -3,7 +3,7 @@ import { crawlWebsite } from "./crawler";
 import { extractStructuredCompanyData } from "./dataExtractor";
 import { analyzeCompanyData } from "./llm";
 import { verifyCompetitorsList } from "./competitors";
-import { UnifiedResearchResponse, VerifiedCompetitor } from "@/types";
+import { UnifiedResearchResponse, VerifiedCompetitor, CrawledPage } from "@/types";
 
 export async function runResearchPipeline(query: string): Promise<UnifiedResearchResponse> {
   const trimmed = query.trim();
@@ -14,8 +14,14 @@ export async function runResearchPipeline(query: string): Promise<UnifiedResearc
   // 1. Resolve company & website
   const company = await resolveCompanyWebsite(trimmed);
 
-  // 2. Crawl website
-  const pages = await crawlWebsite(company.website, 10, 2);
+  // 2. Crawl website (with fallback if crawling fails)
+  let pages: CrawledPage[] = [];
+  try {
+    pages = await crawlWebsite(company.website, 10, 2);
+  } catch (crawlErr) {
+    console.error("Crawling failed, proceeding with base company info:", crawlErr);
+    pages = [];
+  }
 
   // 3. Extract structured data
   const structuredData = extractStructuredCompanyData(
@@ -24,10 +30,10 @@ export async function runResearchPipeline(query: string): Promise<UnifiedResearc
     pages
   );
 
-  // 4. Analyze with OpenRouter
+  // 4. Analyze with OpenRouter (gracefully handles missing key or LLM error)
   const analysis = await analyzeCompanyData(structuredData);
 
-  // 5. Verify competitors
+  // 5. Verify competitors (if suggestions exist)
   let competitors: VerifiedCompetitor[] = [];
   if (analysis.competitorSuggestions && analysis.competitorSuggestions.length > 0) {
     try {

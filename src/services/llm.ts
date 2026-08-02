@@ -5,7 +5,19 @@ export async function analyzeCompanyData(
 ): Promise<AiResearchAnalysis> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY environment variable is not configured");
+    return {
+      summary: "AI analysis is currently unavailable because the AI service API key is not configured in the server environment.",
+      industry: "Not analyzed",
+      targetAudience: "Not analyzed",
+      products: company.products || [],
+      services: company.services || [],
+      painPoints: [],
+      strengths: [],
+      weaknesses: [],
+      opportunities: [],
+      threats: [],
+      competitorSuggestions: [],
+    };
   }
 
   const model = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-001";
@@ -40,15 +52,32 @@ Services Discovered: ${company.services.join(", ")}
 Social Links: ${company.socialLinks.join(", ")}
 Important Discovered Pages: ${company.importantPages.join(", ")}`;
 
-  // First attempt
   try {
     const response = await callOpenRouter(apiKey, model, systemPrompt, userPrompt);
     return parseAndValidateAiResponse(response);
   } catch {
-    // Retry once if JSON parsing fails
-    const retryPrompt = `${systemPrompt}\nCRITICAL: Your previous response failed JSON parsing. Output ONLY raw JSON without any markdown formatting or prefix text.`;
-    const response = await callOpenRouter(apiKey, model, retryPrompt, userPrompt);
-    return parseAndValidateAiResponse(response);
+    try {
+      // Retry once if JSON parsing fails
+      const retryPrompt = `${systemPrompt}\nCRITICAL: Your previous response failed JSON parsing. Output ONLY raw JSON without any markdown formatting or prefix text.`;
+      const response = await callOpenRouter(apiKey, model, retryPrompt, userPrompt);
+      return parseAndValidateAiResponse(response);
+    } catch (retryError: unknown) {
+      const msg = retryError instanceof Error ? retryError.message : "AI service unavailable";
+      console.error("OpenRouter LLM analysis error:", msg);
+      return {
+        summary: "AI analysis is currently unavailable because the AI service encountered an error.",
+        industry: "Not analyzed",
+        targetAudience: "Not analyzed",
+        products: company.products || [],
+        services: company.services || [],
+        painPoints: [],
+        strengths: [],
+        weaknesses: [],
+        opportunities: [],
+        threats: [],
+        competitorSuggestions: [],
+      };
+    }
   }
 }
 
@@ -92,7 +121,6 @@ async function callOpenRouter(
 }
 
 function parseAndValidateAiResponse(rawContent: string): AiResearchAnalysis {
-  // Strip code fences if model returned ```json ... ```
   let cleaned = rawContent.trim();
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
