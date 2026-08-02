@@ -4,7 +4,8 @@ An autonomous corporate intelligence assistant built with Next.js 15, TypeScript
 
 The application converts any company name or domain URL into a comprehensive, verified executive research report and downloadable PDF.
 
-🔗 **Live Application**: [https://company-research-assistant-tau.vercel.app](https://company-research-assistant-tau.vercel.app)
+🔗 **Live Application**: [https://company-research-assistant-tau.vercel.app](https://company-research-assistant-tau.vercel.app)  
+📄 **Handwritten Project Plan**: [DocScanner 2 Aug 2026 7-48 pm.pdf](./DocScanner%202%20Aug%202026%207-48%E2%80%AFpm.pdf)
 
 ---
 
@@ -60,8 +61,9 @@ Unified Research Report (JSON) ──► Frontend UI Display & PDF Export
 ## 📁 Folder Structure
 
 ```text
-src/
-├── app/
+├── DocScanner 2 Aug 2026 7-48 pm.pdf   # Handwritten Project Plan & Architecture Notes
+├── src/
+│   ├── app/
 │   ├── api/
 │   │   ├── company/
 │   │   │   ├── export-pdf/     # PDF Export API
